@@ -1,0 +1,223 @@
+---
+title: "An Introduction to `ggplot2`"
+subtitle: "Making easy plots hard and hard plot easy"
+author: Douglas Sponsler [douglas.sponsler@uni-wuerzburg.de]
+output: html_document
+date: '2022-12-12'
+---
+
+# Introduction
+
+This tutorial will introduce you to the R package `ggplot2`. In general, you will find that `ggplot2` makes easy plots hard and hard plots easy. I assure you that, in the long run, this tradeoff is worth it. Once you master the basic `ggplot2` workflow, R will a canvas
+
+# Load packages
+
+Our focus today will be on `ggplot2`, but we will also use `dplyr` for data preparation, and our example data come from `palmerpenguins`.
+
+```{r warning=FALSE, message=FALSE}
+library(ggplot2) # plotting
+library(dplyr) # data handling
+library(palmerpenguins) # example data
+```
+
+# Prepare example data
+
+You might be wondering what the `palmerpenguins` dataset is about. If you guessed penguins, you're right. After reading the data in from the `palmerpenguins` package, we have a data frame called `penguins`. We need to make one quick modification. In the original data, the variable "year" is coded as an integer column. We want to change year to a factor column so that `ggplot2` will treat it as a discrete rather than continuous variable, and we can do this in one line with a call to `dplyr::mutate`.
+
+```{r warning=FALSE, message=FALSE}
+data("penguins") # read in data from package 
+
+penguins <- penguins %>%
+  mutate(year = factor(year)) # convert `year` to factor
+```
+
+# Exercise 1
+
+Take a couple of minutes to explore the data. The function `dplyr::glimpse` is useful for this.
+
+1.  Which variables have been measured?
+
+2.  How many penguins are in the data set?
+
+3.  Think of a question you could ask about how the variables in this data set might be related.
+
+```{r warning=FALSE, message=FALSE}
+dplyr::glimpse(penguins)
+```
+
+# Example 1
+
+We will start this tutorial with a worked example that will get you familiar with the basics of `ggplot2`. Then, you will use what you learned to design your own plots.
+
+## A motivating question
+
+You might be asking yourself, "Do big penguins have big flippers?" It certainly seems intuitive that flipper length should increase with body mass. But are you a penguin expert? When was the last time you really looked at a penguin?
+
+We need a data-driven answer to this question, and making a scatterplot with body mass on the x-axis and flipper length on the y-axis is a good place to start.
+
+## The base R approach
+
+If you're familiar with plotting in base R, you'll reach for the `plot()` function. The results are perhaps satisfactory. If I asked you to make it more colorful, you could probably figure out how to make the dots blue. You might remember how to add a fit line of some kind.
+
+But what if I asked you color the points by year so that we could look for annual patterns in flipper size? What if I asked you to show whether the relationship between body mass and flipper size is consistent across the penguin species in this dataset?
+
+All these things are possible with base R plotting, but they are tedious. *In base R, easy plots are easy, and hard plots are hard.*
+
+```{r}
+plot(x = penguins$body_mass_g, 
+     y = penguins$flipper_length_mm,
+     xlab = "Body mass (g)",
+     ylab = "Flipper length (mm)")
+```
+
+## The `ggplot2` approach
+
+### Setting up the main aesthetic
+
+Now let's see how we would begin this plotting task with `ggplot2`. You'll notice right away that the syntax is more complex. In particular, there is a rather scary-looking `aes` lurking in there. You might also notice that *the plot is empty*. It would seem that things have gone terribly wrong already. Hang in there. Let's break this down.
+
+The `ggplot()` command starts with the "data" argument that points to the data frame that you want to use for plotting. In this case, it is our `penguins` data frame.
+
+Then comes that mysterious `aes()` function. This function, which stands for "aesthetic", lies at the heart of every ggplot, and it controls the relationship between the variables in the data frame and the features of the plot. We call this "mapping" variables to the plot. Mapping always happens inside "aesthetics", i.e. calls to `aes()`. In this case, we are mapping body mass to the x-axis and flipper length to the y-axis.
+
+```{r}
+ggplot(data = penguins, aes(x = body_mass_g, y = flipper_length_mm))
+```
+
+### Basic scatter plot
+
+Why, then, is the plot empty? Well, there are many possible ways to visualize the relationship between body mass and flipper length, and `ggplot()` is waiting for us to say which option we want. We do this with the `geom()` family of functions, and we add this to the first line using the `+` operator.
+
+To make a scatter plot, we use `geom_point()`. We can leave the inside of the parentheses empty because all the information that `geom_point()` needs is in the `aes()` call that we already made. Notice that `ggplot()` has thrown a warning about missing data. You may have noticed earlier that some of the rows in our data set have missing values, and `ggplot()` kindly points this out for us.
+
+What do you think of the default look of the ggplot compared to the base R plot? Personally, I like it, but we can do a lot better.
+
+```{r}
+ggplot(data = penguins, aes(x = body_mass_g, y = flipper_length_mm)) +
+  geom_point()
+```
+
+### Clean up labels
+
+For starters, let's clean up those labels. We can do this with the `labs()` function. 
+
+Notice that we simply join a new line to our plot with another `+`. This is how ggplots are built.
+
+```{r}
+ggplot(data = penguins, aes(x = body_mass_g, y = flipper_length_mm)) +
+  geom_point() +
+  labs(x = "Body mass (g)", y = "Flipper length (mm)")
+```
+
+### Map color to year
+
+Now, let's take up the challenge of coloring points by year. We have to *map* the `year` to color. 
+
+Remember, mapping always happens inside calls to `aes()`. To map year to color, we simply add `year = color` to the `aes()` call in the first line. We can also add a custom label for the color coding in the `labs()` call.
+
+```{r}
+ggplot(data = penguins, aes(x = body_mass_g, y = flipper_length_mm, color = year)) +
+  geom_point() +
+  labs(x = "Body mass (g)", y = "Flipper length (mm)", color = "Year")
+```
+
+### Facet by species
+
+The next challenge is to somehow split up the plot so that we can look at one species at a time. In base R, this would be tricky. With `ggplot2`, it's just one more line of code. We're already beyond the easy plots made hard, and now we get to enjoy the hard plots made easy.
+
+The `facet_wrap()` function is one of the most powerful and useful features of `ggplot2`. Use the `~` operator to specify the variable by which you want to facet the plot 
+
+```{r}
+ggplot(data = penguins, aes(x = body_mass_g, y = flipper_length_mm, color = year)) +
+  geom_point() +
+  labs(x = "Body mass (g)", y = "Flipper length (mm)", color = "Year") +
+  facet_wrap(~species)
+```
+
+### Free axes
+
+It's clear that Gentoo penguins are much bigger than the other two species, and we might want to remove this pattern to focus on the relationship between flipper length and body size. 
+
+To do this, simply add `scales = "free"` to the `facet_wrap()` call. Notice that the scales of the x- and y-axes have now changed for the Gentoo data.
+
+```{r}
+ggplot(data = penguins, aes(x = body_mass_g, y = flipper_length_mm, color = year)) +
+  geom_point() +
+  labs(x = "Body mass (g)", y = "Flipper length (mm)", color = "Year") +
+  facet_wrap(~species, scales = "free")
+```
+### Make points partially transparent.
+
+With a crowded plot, it can be nice to use an alpha channel to make features partially transparent.
+
+Add `alpha = 0.5` to the `geom_point()` call.
+
+```{r}
+ggplot(data = penguins, aes(x = body_mass_g, y = flipper_length_mm, color = year)) +
+  geom_point(alpha = 0.5) +
+  labs(x = "Body mass (g)", y = "Flipper length (mm)", color = "Year") +
+  facet_wrap(~species, scales = "free")
+```
+
+### Change theme and remove grid lines
+
+Don't like the grey theme? I don't love it either. For most purposes, I like the "light" theme, which can be selected using the `theme_light()` function.
+
+Sometimes grid lines can make a graph feel cluttered. These, as well as many other plot features, can be customized using the `theme()` function. In this cases, we assign the argument `panel.grid` to the function `element_blank()`, which --- as you might expect --- causes the gird lines to disappear.
+
+```{r}
+ggplot(data = penguins, aes(x = body_mass_g, y = flipper_length_mm, color = year)) +
+  geom_point(alpha = 0.5) +
+  labs(x = "Body mass (g)", y = "Flipper length (mm)", color = "Year") +
+  facet_wrap(~species, scales = "free") +
+  theme_light() +
+  theme(panel.grid = element_blank())
+```
+
+# Exercises
+
+## Exercise 1: Explore the function `geom_smooth()`, which adds fit lines to scatter plots. 
+
+
+### 1.1 What is the default smoothing method that `geom_smooth()` uses? 
+
+
+### 1.2 Try switching to a linear fit line using `method = "lm`. 
+
+```{r}
+
+```
+
+
+### 1.3 Remove the `color = year` line from the first line of the code, and add `aes(color = year)` to the `geom_point()` call. What effect does this have on the behavior of the fit lines?
+
+```{r}
+
+```
+
+
+## Exercise 2: Make graphs that compare overall flipper size across species, irrespective of body mass. We will try a few different methods. In each case, start with the most basic graph, then gradually add lines to make the plot clearer and more beautiful. Explore what happens when you change `color =` to `fill =`. Should you use any facetting variables? Transparency? Would a dark theme look nice? Have fun with it.
+
+### 2.1 `geom_histogram()`
+
+```{r}
+
+```
+
+### 2.2 `geom_density()`
+
+```{r}
+
+```
+
+### 2.3 `geom_boxplot()`
+
+```{r}
+
+```
+
+### 2.4 `geom_violin()`
+
+```{r}
+
+```
