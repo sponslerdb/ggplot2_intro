@@ -16,6 +16,7 @@ Our focus today will be on `ggplot2`, but we will also use `dplyr` for data prep
 
 ```{r warning=FALSE, message=FALSE}
 library(ggplot2) # plotting
+library(patchwork) # multi-panel plotting
 library(dplyr) # data handling
 library(palmerpenguins) # example data
 ```
@@ -228,6 +229,26 @@ Make graphs that compare overall flipper size across species, irrespective of bo
 ```
 
 4. `geom_violin()`
+
+```{r}
+
+```
+
+
+## Exercise 3
+
+The package `patchwork` enables you to combine ggplots into a multi-panel figure. This is a very common task when preparing plots for publication, and it can be the most frustrating and tedious part of finalizing the figures in your manuscript. `patchwork` makes it easy.
+
+Take a few minutes to explore the package: https://patchwork.data-imaginist.com/
+
+Use patchwork to make a multi-panel figure. 
+
+1. Put the final figure from Example 1 on the left side of the multipanel plot
+
+2. Choose 2 plots from Exercise 4 and stack them on the right side of the multipanel plot.
+
+3. Label the 3 panels (A), (B), and (C).
+
 
 ```{r}
 
