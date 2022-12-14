@@ -253,3 +253,9 @@ Use patchwork to make a multi-panel figure.
 ```{r}
 
 ```
+
+
+# Diving deeper
+
+If you enjoyed this tutorial and want to take a deep dive into the wonderful world of `ggplot2`, I recommend this online book from the man behind the package, the inimitable Hadley Wickham: https://ggplot2-book.org/index.html
+
