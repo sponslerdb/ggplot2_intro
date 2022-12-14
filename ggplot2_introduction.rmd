@@ -245,7 +245,7 @@ Use patchwork to make a multi-panel figure.
 
 1. Put the final figure from Example 1 on the left side of the multipanel plot
 
-2. Choose 2 plots from Exercise 4 and stack them on the right side of the multipanel plot.
+2. Choose 2 plots from Exercise 2 and stack them on the right side of the multipanel plot.
 
 3. Label the 3 panels (A), (B), and (C).
 
