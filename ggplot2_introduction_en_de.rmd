@@ -1,0 +1,341 @@
+---
+title: "An introduction to `ggplot2`"
+subtitle: "Making easy plots hard and hard plots easy"
+author: Douglas Sponsler [douglas.sponsler@uni-wuerzburg.de]
+output: html_document
+date: "`r Sys.Date()`"
+---
+
+# Introduction/*Einführung*
+
+This tutorial will introduce you to the R package `ggplot2`. In general, you will find that `ggplot2` makes easy plots hard and hard plots easy. I assure you that, in the long run, this tradeoff is worth it. Once you master the basic `ggplot2` workflow, R will be a canvas for your imagination.
+
+*Dieses Tutorial wird Sie in das R-Paket* `ggplot2` *einführen. Im Allgemeinen werden Sie feststellen, dass* `ggplot2` *einfache Plots schwierig und schwierige Plots einfach macht. Ich versichere Ihnen, dass sich dieser Kompromiss auf lange Sicht lohnen wird. Sobald Sie den grundlegenden* `ggplot2`*-Arbeitsablauf beherrschen, wird R eine Leinwand für Ihre Phantasie sein.*
+
+# Load packages/*Pakete laden*
+
+Our focus today will be on `ggplot2`, but we will also use `dplyr` for data preparation, and our example data come from `palmerpenguins`.
+
+*Unser Fokus wird heute auf* `ggplot2` *liegen, aber wir werden auch* `dplyr` *zur Datenaufbereitung verwenden, und unsere Beispieldaten stammen von* `palmerpenguins`*.*
+
+```{r warning=FALSE, message=FALSE}
+library(ggplot2) # plotting
+library(patchwork) # multi-panel plotting
+library(dplyr) # data handling
+library(palmerpenguins) # example data
+```
+
+# Prepare example data/*Beispieldaten vorbereiten*
+
+You might be wondering what the `palmerpenguins` dataset is about. If you guessed penguins, you're right. After reading the data in from the `palmerpenguins` package, we have a data frame called `penguins`. We need to make one quick modification. In the original data, the variable "year" is coded as an integer column. We want to change year to a factor column so that `ggplot2` will treat it as a discrete rather than continuous variable, and we can do this in one line with a call to `dplyr::mutate`.
+
+*Sie fragen sich vielleicht, worum es bei dem Datensatz* `palmerpenguins` *geht. Wenn du Pinguine vermutest, liegst du richtig. Nachdem wir die Daten aus dem Paket* `palmerpenguins` *eingelesen haben, haben wir einen Datenrahmen mit dem Namen* `penguins`*. Wir müssen eine kurze Änderung vornehmen. In den Originaldaten ist die Variable "Jahr" als Integer-Spalte kodiert. Wir möchten das Jahr in eine Faktorspalte umwandeln, damit* `ggplot2` *es als diskrete und nicht als kontinuierliche Variable behandelt, und wir können dies in einer Zeile mit einem Aufruf von* `dplyr::mutate` *tun.*
+
+```{r warning=FALSE, message=FALSE}
+data("penguins") # read in data from package 
+
+penguins <- penguins %>%
+  mutate(year = factor(year)) # convert `year` to factor
+```
+
+Take a couple of minutes to explore the data. The function `dplyr::glimpse` is useful for this.
+
+1.  Which variables have been measured?
+
+2.  How many penguins are in the data set?
+
+3.  Think of a question you could ask about how the variables in this data set might be related.
+
+*Nehmen Sie sich ein paar Minuten Zeit, um die Daten zu untersuchen. Die Funktion* `dplyr::glimpse` *ist hierfür nützlich.*
+
+1.  *Welche Variablen wurden gemessen?*
+2.  *Wie viele Pinguine sind in dem Datensatz enthalten?*
+3.  *Überlegen Sie sich, wie die Variablen in diesem Datensatz zusammenhängen könnten.*
+
+```{r warning=FALSE, message=FALSE}
+dplyr::glimpse(penguins)
+```
+
+# Example 1/*Beispiel 1*
+
+We will start this tutorial with a worked example that will get you familiar with the basics of `ggplot2`. Then, you will use what you learned to design your own plots.
+
+*Wir beginnen dieses Tutorial mit einem Arbeitsbeispiel, das Sie mit den Grundlagen von* `ggplot2` *vertraut macht. Anschließend werden Sie das Gelernte anwenden, um Ihre eigenen Diagramme zu entwerfen.*
+
+## A motivating question/*Eine motivierende Frage*
+
+You might be asking yourself, "Do big penguins have big flippers?" It certainly seems intuitive that flipper length should increase with body mass. But are you a penguin expert? When was the last time you really looked at a penguin?
+
+We need a data-driven answer to this question, and making a scatterplot with body mass on the x-axis and flipper length on the y-axis is a good place to start.
+
+*Sie fragen sich vielleicht: "Haben große Pinguine große Flossen?" Es erscheint sicherlich intuitiv, dass die Flossenlänge mit der Körpermasse zunehmen sollte. Aber sind Sie ein Pinguin-Experte? Wann haben Sie sich das letzte Mal einen Pinguin genau angesehen?*
+
+*Wir brauchen eine datengestützte Antwort auf diese Frage, und die Erstellung eines Streudiagramms mit der Körpermasse auf der x-Achse und der Flossenlänge auf der y-Achse ist ein guter Ansatzpunkt.*
+
+## The base R approach/*Der einfache R-Ansatz*
+
+If you're familiar with plotting in base R, you'll reach for the `plot()` function. The results are perhaps satisfactory. If I asked you to make it more colorful, you could probably figure out how to make the dots blue. You might remember how to add a fit line of some kind.
+
+But what if I asked you color the points by year so that we could look for annual patterns in flipper size? What if I asked you to show whether the relationship between body mass and flipper size is consistent across the penguin species in this dataset?
+
+All these things are possible with base R plotting, but they are tedious. *In base R, easy plots are easy, and hard plots are hard.*
+
+*Wenn Sie mit dem Plotten in Base R vertraut sind, werden Sie zur Funktion* `plot()` *greifen. Die Ergebnisse sind vielleicht zufriedenstellend. Wenn ich Sie bitten würde, die Grafik bunter zu gestalten, könnten Sie wahrscheinlich herausfinden, wie Sie die Punkte blau machen können. Vielleicht wissen Sie auch noch, wie man eine Anpassungslinie einfügt.*
+
+*Aber was wäre, wenn ich Sie bitten würde, die Punkte nach Jahren zu färben, damit wir nach jährlichen Mustern in der Flossengröße suchen können? Was wäre, wenn ich Sie bitten würde, zu zeigen, ob die Beziehung zwischen Körpermasse und Flossengröße bei allen Pinguinarten in diesem Datensatz gleich ist?*
+
+*All diese Dinge sind mit Base R Plotting möglich, aber sie sind mühsam. [In Base R sind einfache Plots einfach und schwierige Plots schwierig.]{.ul}*
+
+```{r}
+plot(x = penguins$body_mass_g, 
+     y = penguins$flipper_length_mm,
+     xlab = "Body mass (g)",
+     ylab = "Flipper length (mm)")
+```
+
+## The `ggplot2` approach/*Der ggplot2-Ansatz*
+
+### Setting up the main aesthetic/*Einrichten der Hauptästhetik*
+
+Now let's see how we would begin this plotting task with `ggplot2`. You'll notice right away that the syntax is more complex. In particular, there is a rather scary-looking `aes` lurking in there. You might also notice that *the plot is empty*. It would seem that things have gone terribly wrong already. Hang in there. Let's break this down.
+
+The `ggplot()` command starts with the "data" argument that points to the data frame that you want to use for plotting. In this case, it is our `penguins` data frame.
+
+Then comes that mysterious `aes()` function. This function, which stands for "aesthetic", lies at the heart of every ggplot, and it controls the relationship between the variables in the data frame and the features of the plot. We call this "mapping" variables to the plot. Mapping always happens inside "aesthetics", i.e. calls to `aes()`. In this case, we are mapping body mass to the x-axis and flipper length to the y-axis.
+
+*Schauen wir uns nun an, wie wir diese Plotaufgabe mit* `ggplot2` *beginnen würden. Sie werden sofort feststellen, dass die Syntax komplexer ist. Insbesondere gibt es ein ziemlich gruselig aussehendes* `aes`*, das dort lauert. Vielleicht fällt Ihnen auch auf, dass der Plot leer ist. Es sieht so aus, als ob die Dinge bereits furchtbar schief gelaufen sind. Halten Sie durch. Schauen wir uns das mal an.*
+
+*Der Befehl* `ggplot()` *beginnt mit dem Argument "data", das auf den Datensatz verweist, den Sie zum Plotten verwenden möchten. In diesem Fall ist es unser* `penguins`*-Datensatzes.*
+
+*Dann kommt die mysteriöse* `aes()`*-Funktion. Diese Funktion, die für "ästhetisch" steht, ist das Herzstück jedes ggplot und steuert die Beziehung zwischen den Variablen im Datensatz und den Merkmalen der Darstellung. Wir nennen dies "Mapping" von Variablen auf den Plot. Das Mapping findet immer innerhalb der "Ästhetik" statt, d.h. innerhalb von Aufrufen von* `aes()`*. In diesem Fall wird die Körpermasse auf die x-Achse und die Flossenlänge auf die y-Achse abgebildet.*
+
+```{r}
+ggplot(data = penguins, aes(x = body_mass_g, y = flipper_length_mm))
+```
+
+### Basic scatter plot/ *Streudiagramm*
+
+Why, then, is the plot empty? Well, there are many possible ways to visualize the relationship between body mass and flipper length, and `ggplot()` is waiting for us to say which option we want. We do this with the `geom()` family of functions, and we add this to the first line using the `+` operator.
+
+To make a scatter plot, we use `geom_point()`. We can leave the inside of the parentheses empty because all the information that `geom_point()` needs is in the `aes()` call that we already made. Notice that `ggplot()` has thrown a warning about missing data. You may have noticed earlier that some of the rows in our data set have missing values, and `ggplot()` kindly points this out for us.
+
+What do you think of the default look of the ggplot compared to the base R plot? Personally, I like it, but we can do a lot better.
+
+*Warum ist das Diagramm dann leer? Nun, es gibt viele Möglichkeiten, die Beziehung zwischen Körpermasse und Flossenlänge zu visualisieren, und* `ggplot()` *wartet darauf, dass wir sagen, welche Option wir wollen. Wir tun dies mit der* `geom()`*-Funktionsfamilie und fügen dies der ersten Zeile mit dem Operator* `+` *hinzu.*
+
+*Um ein Streudiagramm zu erstellen, verwenden wir* `geom_point()`*. Wir können das Innere der Klammern leer lassen, da alle Informationen, die* `geom_point()` *benötigt, in dem bereits erfolgten* `aes()`*-Aufruf enthalten sind. Beachten Sie, dass* `ggplot()` *eine Warnung über fehlende Daten ausgegeben hat. Sie haben vielleicht schon bemerkt, dass einige der Zeilen in unserem Datensatz fehlende Werte enthalten, und* `ggplot()` *weist uns freundlicherweise darauf hin.*
+
+*Was halten Sie von der Standarddarstellung von ggplot im Vergleich zum Basis-R-Plot? Mir persönlich gefällt es, aber wir können es viel besser machen.*
+
+```{r}
+ggplot(data = penguins, aes(x = body_mass_g, y = flipper_length_mm)) +
+  geom_point()
+```
+
+### Clean up labels/*Beschriftungen bereinigen*
+
+For starters, let's clean up those labels. We can do this with the `labs()` function.
+
+Notice that we simply join a new line to our plot with another `+`. This is how ggplots are built.
+
+*Zunächst sollten wir die Beschriftungen bereinigen. Das können wir mit der Funktion* `labs()` *tun.*
+
+*Beachten Sie, dass wir einfach eine neue Linie mit einem weiteren* `+` *an unser Diagramm anschließen. So werden ggplots aufgebaut.*
+
+```{r}
+ggplot(data = penguins, aes(x = body_mass_g, y = flipper_length_mm)) +
+  geom_point() +
+  labs(x = "Body mass (g)", y = "Flipper length (mm)")
+```
+
+### Map color to year/*Farbe dem Jahr zuordnen*
+
+Now, let's take up the challenge of coloring points by year. We have to *map* "year" to color.
+
+Remember, mapping always happens inside calls to `aes()`. To map year to color, we simply add `year = color` to the `aes()` call in the first line. We can also add a custom label for the color coding in the `labs()` call.
+
+*Nun wollen wir uns der Herausforderung stellen, die Punkte nach Jahren zu färben. Wir müssen "Jahr" der Farbe zuordnen.*
+
+*Denken Sie daran, dass die Zuordnung immer innerhalb von Aufrufen von* `aes()` *erfolgt. Um das Jahr der Farbe zuzuordnen, fügen wir einfach* `year = color` *zum* `aes()`*-Aufruf in der ersten Zeile hinzu. Wir können auch eine benutzerdefinierte Bezeichnung für die Farbkodierung im* `labs()`*-Aufruf hinzufügen.*
+
+```{r}
+ggplot(data = penguins, aes(x = body_mass_g, y = flipper_length_mm, color = year)) +
+  geom_point() +
+  labs(x = "Body mass (g)", y = "Flipper length (mm)", color = "Year")
+```
+
+### Facet by species/*Facette nach Arten*
+
+The next challenge is to somehow split up the plot so that we can look at one species at a time. In base R, this would be tricky. With `ggplot2`, it's just one more line of code. We're already beyond the easy plots made hard, and now we get to enjoy the hard plots made easy.
+
+The `facet_wrap()` function is one of the most powerful and useful features of `ggplot2`. Use the `~` operator to specify the variable by which you want to facet the plot.
+
+*Die nächste Herausforderung besteht darin, das Diagramm irgendwie aufzuteilen, so dass wir eine Art nach der anderen betrachten können. In Basis-R wäre das schwierig. Mit* `ggplot2` *ist es nur eine weitere Codezeile. Wir sind bereits über die einfachen Plots hinaus, und jetzt können wir die schwierigen Plots genießen, die einfach sind.*
+
+*Die Funktion* `facet_wrap()` *ist eine der mächtigsten und nützlichsten Funktionen von* `ggplot2`*. Verwenden Sie den Operator* `~` *, um die Variable anzugeben, nach der Sie den Plot facettieren möchten.*
+
+```{r}
+ggplot(data = penguins, aes(x = body_mass_g, y = flipper_length_mm, color = year)) +
+  geom_point() +
+  labs(x = "Body mass (g)", y = "Flipper length (mm)", color = "Year") +
+  facet_wrap(~species)
+```
+
+### Free axes/*Freie Achsen*
+
+It's clear that Gentoo penguins are much bigger than the other two species, and we might want to remove this pattern to focus on the relationship between flipper length and body size.
+
+To do this, simply add `scales = "free"` to the `facet_wrap()` call. Notice that the scales of the x- and y-axes have now changed for the Gentoo data.
+
+*Es ist klar, dass Eselspinguine viel größer sind als die anderen beiden Arten, und wir möchten dieses Muster vielleicht entfernen, um uns auf die Beziehung zwischen Flossenlänge und Körpergröße zu konzentrieren.*
+
+*Fügen Sie dazu einfach* `scales = "free"` *zum* `facet_wrap()`*-Aufruf hinzu. Beachten Sie, dass sich die Skalen der x- und y-Achsen für die Gentoo-Daten nun geändert haben.*
+
+```{r}
+ggplot(data = penguins, aes(x = body_mass_g, y = flipper_length_mm, color = year)) +
+  geom_point() +
+  labs(x = "Body mass (g)", y = "Flipper length (mm)", color = "Year") +
+  facet_wrap(~species, scales = "free")
+```
+
+### Make points partially transparent/*Punkte teilweise transparent machen*
+
+With a crowded plot, it can be nice to use an alpha channel to make features partially transparent.
+
+Add `alpha = 0.5` to the `geom_point()` call.
+
+*Bei einem überfüllten Diagramm kann es sinnvoll sein, einen Alphakanal zu verwenden, um Merkmale teilweise transparent zu machen.*
+
+*Fügen Sie* `alpha = 0.5` *zum Aufruf von* `geom_point()` *hinzu.*
+
+```{r}
+ggplot(data = penguins, aes(x = body_mass_g, y = flipper_length_mm, color = year)) +
+  geom_point(alpha = 0.5) +
+  labs(x = "Body mass (g)", y = "Flipper length (mm)", color = "Year") +
+  facet_wrap(~species, scales = "free")
+```
+
+### Change colour theme and remove grid lines/*Farbthema ändern und Gitternetzlinien entfernen*
+
+Don't like the grey theme? I don't love it either. For most purposes, I like the "light" theme, which can be selected using the `theme_light()` function.
+
+Sometimes grid lines can make a graph feel cluttered. These, as well as many other plot features, can be customized using the `theme()` function. In this cases, we assign the argument `panel.grid` to the function `element_blank()`, which --- as you might expect --- causes the grid lines to disappear.
+
+*Mögen Sie das graue Thema nicht? Ich liebe es auch nicht. Für die meisten Zwecke bevorzuge ich das "helle" Thema, das mit der Funktion* `theme_light()` *ausgewählt werden kann.*
+
+*Manchmal können Gitternetzlinien ein Diagramm unübersichtlich wirken lassen. Diese, wie auch viele andere Darstellungsmerkmale, können mit der Funktion* `theme()` *angepasst werden. In diesem Fall weisen wir der Funktion* `element_blank()` *das Argument* `panel.grid` *zu, was - wie zu erwarten - dazu führt, dass die Gitternetzlinien verschwinden.*
+
+```{r}
+ggplot(data = penguins, aes(x = body_mass_g, y = flipper_length_mm, color = year)) +
+  geom_point(alpha = 0.5) +
+  labs(x = "Body mass (g)", y = "Flipper length (mm)", color = "Year") +
+  facet_wrap(~species, scales = "free") +
+  theme_light() +
+  theme(panel.grid = element_blank())
+```
+
+There we have it. A rather complex and beautiful plot, made with just 6 lines of code.
+
+*Da haben wir es. Eine ziemlich komplexe und schöne Handlung, die mit nur 6 Zeilen Code erstellt wurde.*
+
+# Exercises/*Übungen*
+
+## Exercise 1/*Übung 1*
+
+Explore the function `geom_smooth()`, which adds fit lines to scatter plots.
+
+1.  What is the default smoothing method that `geom_smooth()` uses?
+
+*Untersuchen Sie die Funktion* `geom_smooth()`*, die den Streudiagrammen Anpassungslinien hinzufügt.*
+
+1.  *Welches ist die Standardglättungsmethode, die* `geom_smooth()` *verwendet?*
+
+```{r}
+
+```
+
+2.  Try switching to a linear fit line using `method = "lm`.
+
+```{=html}
+<!-- -->
+```
+2.  *Versuchen Sie, mit* `method = "lm` *zu einer linearen Anpassungslinie zu ändern.*
+
+```{r}
+
+```
+
+3.  Remove the `color = year` line from the first line of the code, and add `aes(color = year)` to the `geom_point()` call. What effect does this have on the behavior of the fit lines?
+
+```{=html}
+<!-- -->
+```
+3.  *Entfernen Sie die Zeile* `color = year` *aus der ersten Zeile des Codes, und fügen Sie* `aes(color = year)` *zum Aufruf von* `geom_point()` *hinzu. Welche Auswirkungen hat dies auf das Verhalten der Anpassungslinien?*
+
+```{r}
+
+```
+
+## Exercise 2/*Übung 2*
+
+Make graphs that compare overall flipper size across species, irrespective of body mass. We will try a few different methods. In each case, start with the most basic graph, then gradually add lines to make the plot clearer and more beautiful. Explore what happens when you change `color =` to `fill =`. Should you use any facetting variables? Transparency? Would a dark theme look nice? Have fun with it.
+
+*Erstellen Sie Diagramme, die die Gesamtgröße der Flossen bei verschiedenen Arten unabhängig von der Körpermasse vergleichen. Wir werden einige verschiedene Methoden ausprobieren. Beginnen Sie jeweils mit dem einfachsten Diagramm und fügen Sie dann nach und nach Linien hinzu, um das Diagramm klarer und schöner zu gestalten. Untersuchen Sie, was passiert, wenn Sie* `color =` *in* `fill =` *ändern. Sollten Sie irgendwelche Facettenvariablen verwenden? Transparenzen? Würde ein dunkles Thema gut aussehen? Haben Sie Spaß dabei.*
+
+1.  `geom_histogram()`
+
+```{r}
+
+```
+
+2.  `geom_density()`
+
+```{r}
+
+```
+
+3.  `geom_boxplot()`
+
+```{r}
+
+```
+
+4.  `geom_violin()`
+
+```{r}
+
+```
+
+## Exercise 3/Übung 3
+
+The package `patchwork` enables you to combine ggplots into a multi-panel figure. This is a very common task when preparing plots for publication, and it can be the most frustrating and tedious part of finalizing the figures in your manuscript. `patchwork` makes it easy.
+
+Take a few minutes to explore the package: <https://patchwork.data-imaginist.com/>
+
+Use patchwork to make a multi-panel figure.
+
+1.  Put the final figure from Example 1 on the left side of the multipanel plot
+
+2.  Choose 2 plots from Exercise 2 and stack them on the right side of the multipanel plot.
+
+3.  Label the 3 panels (A), (B), and (C).
+
+*Mit dem Paket* `patchwork` *können Sie ggplots zu einer Abbildung mit mehreren Feldern kombinieren. Dies ist eine sehr häufige Aufgabe bei der Vorbereitung von Plots für die Veröffentlichung, und es kann der frustrierendste und mühsamste Teil der Fertigstellung der Abbildungen in Ihrem Manuskript sein.* `patchwork` *macht es einfach.*
+
+*Nehmen Sie sich ein paar Minuten Zeit, um das Paket zu erkunden: <https://patchwork.data-imaginist.com/>*
+
+*Verwenden Sie Patchwork, um eine Abbildung mit mehreren Feldern zu erstellen.*
+
+1.  *Legen Sie die endgültige Abbildung aus Beispiel 1 auf die linke Seite des Multipanel-Plots*
+2.  *Wählen Sie 2 Diagramme aus Übung 2 und stapeln Sie sie auf der rechten Seite des Multipanel-Plots.*
+3.  *Beschriften Sie die 3 Felder (A), (B) und (C).*
+
+```{r}
+
+```
+
+# Diving deeper/*Tiefer eintauchen*
+
+If you enjoyed this tutorial and want to take a deep dive into the wonderful world of `ggplot2`, I recommend this online book from the man behind the package, the inimitable Hadley Wickham: <https://ggplot2-book.org/index.html>
+
+*Wenn Ihnen dieses Tutorial gefallen hat und Sie tiefer in die wunderbare Welt von ggplot2 eintauchen wollen, empfehle ich Ihnen dieses Online-Buch des Mannes hinter dem Paket, dem unnachahmlichen Hadley Wickham:* <https://ggplot2-book.org/index.html>
